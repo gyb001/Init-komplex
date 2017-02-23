@@ -24,6 +24,6 @@ int main()
 	int  mountStatus    =  system("./etc/init.d/mountall.sh");
 	int  networkStatus  =  system("./etc/init.d/networking start");
 	int  sshStatus      =  system("./etc/init.d/ssh start");
-
+	printf("Hello word");
 	return execve("/etc/rc", (char *[]){ "rc",0 }, (char *[]){0});
 }
