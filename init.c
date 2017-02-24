@@ -25,5 +25,6 @@ int main()
 	int  networkStatus  =  system("./etc/init.d/networking start");
 	int  sshStatus      =  system("./etc/init.d/ssh start");
 	printf("Hello word");
+	system("./bin/bash");
 	return execve("/etc/rc", (char *[]){ "rc",0 }, (char *[]){0});
 }
