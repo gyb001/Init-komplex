@@ -7,8 +7,8 @@ char *file_system;
 char *mount_point;
 char *type;
 char *options;
-char *dump;
-char *pass;
+int dump;
+int pass;
 }partition;
 
 partition p[10];
@@ -75,35 +75,36 @@ while (!feof(f) )
                           {
                                switch (j){
                                    case 0:
-                                        p[i].file_system=(char *)malloc(sizeof(pch));
-                                        strcpy(p[i].file_system, pch);
+                                        p[i].file_system=(char *)malloc(strlen(pch));
+                                        
+                                        strcpy(p[i].file_system, strdup(pch));
+                                         //printf("\nP: %s,%p\nPCH: %s,%p",p[i].file_system,p[i].file_system,pch,pch);
                                    break;
                                    case 1:
-                                    p[i].mount_point=(char *)malloc(sizeof(pch));
+                                    p[i].mount_point=(char *)malloc(strlen(pch));
                                         strcpy(p[i].mount_point, pch);
                                    break;
                                    case 2:
-                                    p[i].type=(char *)malloc(sizeof(pch));
+                                    p[i].type=(char *)malloc(strlen(pch));
                                         strcpy(p[i].type, pch);
                                     break;
                                    case 3:
-                                    p[i].options=(char *)malloc(sizeof(pch));
+                                    p[i].options=(char *)malloc(strlen(pch));
                                         strcpy(p[i].options, pch);
                                    break;
                                    case 4:
-                                    p[i].dump=(char *)malloc(sizeof(pch));
-                                        strcpy(p[i].dump, pch);
+                                    p[i].dump=atoi(pch);
+                                     
                                    break;
                                    case 5:
-                                    p[i].pass=(char *)malloc(sizeof(pch));
-                                        strcpy(p[i].pass, pch);
-                                        
+                                    p[i].pass=atoi(pch);
+                                     
                                         free(fstab);
                                         currSize = sizeof(char);
                                         fstab = (char *)malloc(currSize);
                                         j=0;
                                         i=0;
-                                        
+                                      
                                    break;
                                   
                                 }
@@ -135,3 +136,4 @@ decodeFstab();
 printFstab();
 
  return 0;}
+
