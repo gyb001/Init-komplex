@@ -2,6 +2,7 @@
 #include<stdlib.h>
 #include<string.h>
 #include<sys/mount.h>
+#include<stdbool.h>
 typedef struct partition {
 char *file_system;
 char *mount_point;
@@ -36,7 +37,7 @@ int decodeFstab()
 {
 
  int i = 0;
- int boole=0;
+ bool commLine=false;;
  char tmp = 0;
  FILE *f;
  
@@ -60,13 +61,13 @@ while (!feof(f) )
          {
                 fscanf(f,"%c",&tmp);
                 
-                 if(tmp == '#') boole=1; 
-                 if(boole==1 && tmp!='\n') continue;
-                 if(boole==1 && tmp=='\n') boole=0;
+                 if(tmp == '#') commLine=true; 
+                 if(commLine && tmp!='\n') continue;
+                 if(commLine && tmp=='\n') commLine=false;
                  if(tmp=='\n' && fstab[i-1]=='\n') continue; 
                  if(tmp==' ' && fstab[i-1]==' ') continue;
                   
-
+               
                  if(tmp == '\n')
                  {
                   pch = strtok (fstab," ");
@@ -78,7 +79,7 @@ while (!feof(f) )
                                         p[i].file_system=(char *)malloc(strlen(pch));
                                         
                                         strcpy(p[i].file_system, strdup(pch));
-                                         //printf("\nP: %s,%p\nPCH: %s,%p",p[i].file_system,p[i].file_system,pch,pch);
+                                         printf("\nP: %s,%p\nPCH: %s,%p",p[i].file_system,p[i].file_system,pch,pch);
                                    break;
                                    case 1:
                                     p[i].mount_point=(char *)malloc(strlen(pch));
