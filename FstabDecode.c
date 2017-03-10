@@ -16,6 +16,42 @@ partition p[10];
 int N=10;
 
 
+int umountFstab()
+{
+{
+   for(int i=0;i<2;i++)
+
+   if (umount(p[i].file_system) == 0)
+   {
+      printf("Sikerült a  %s lecsatolása\n", p[i].file_system);
+   }
+   else
+   {
+      printf("Hiba a fájl lecsatolása közben: %s\n",p[i].file_system);
+
+      return -1;
+   }
+
+   return 0;
+}
+}
+int mountFstab()
+{
+   for(int i=0;i<2;i++)
+
+   if (mount(p[i].file_system, p[i].mount_point, p[i].type, p[i].dump, p[i].options) == 0)
+   {
+      printf("Sikerült a  %s csatolása\n", p[i].file_system);
+   }
+   else
+   {
+      printf("Hiba a fájl csatolása közben: %s\n",p[i].file_system);
+
+      return -1;
+   }
+
+   return 0;
+}
 int printFstab()
 {
 for(int i=0;i<N;i++)
@@ -102,7 +138,7 @@ while (!feof(f) )
                                         free(fstab);
                                         currSize = sizeof(char);
                                         fstab = (char *)malloc(currSize);
-                                        j=0;
+                                  
                                         i=0;
                                       
                                    break;
@@ -134,6 +170,7 @@ int main(int argc, char *argv[]) {
 
 decodeFstab();
 printFstab();
+
 
  return 0;}
 
