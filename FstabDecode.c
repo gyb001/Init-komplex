@@ -63,10 +63,9 @@ while (!feof(f) )
                 
                  if(tmp == '#') commLine=true; 
                  if(commLine && tmp!='\n') continue;
-                 if(commLine && tmp=='\n') commLine=false;
-                 if(tmp=='\n' && fstab[i-1]=='\n') continue; 
-                 if(tmp==' ' && fstab[i-1]==' ') continue;
-                  
+                 if(commLine && tmp=='\n') {commLine=false;continue;}
+                 
+            
                
                  if(tmp == '\n')
                  {
