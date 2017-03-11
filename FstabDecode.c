@@ -3,174 +3,168 @@
 #include<string.h>
 #include<sys/mount.h>
 #include<stdbool.h>
-typedef struct partition {
-char *file_system;
-char *mount_point;
-char *type;
-char *options;
-int dump;
-int pass;
-}partition;
-
-partition p[10];
-int N=10;
+#include <sys/stat.h>
 
 
-int umountFstab()
+typedef struct partition
 {
+        char *file_system;
+        char *mount_point;
+        char *type;
+        char *options;
+        int fsS=1,mpS=1,tS=1,oS=1;
+        int dump;
+        int pass;
+        struct partition *next;
+}partition_t;
+
+
+
+int fstabDecodeToList(partition_t *p)
 {
-   for(int i=0;i<2;i++)
-
-   if (umount(p[i].file_system) == 0)
-   {
-      printf("Sikerült a  %s lecsatolása\n", p[i].file_system);
-   }
-   else
-   {
-      printf("Hiba a fájl lecsatolása közben: %s\n",p[i].file_system);
-
-      return -1;
-   }
-
-   return 0;
-}
-}
-int mountFstab()
-{
-   for(int i=0;i<2;i++)
-
-   if (mount(p[i].file_system, p[i].mount_point, p[i].type, p[i].dump, p[i].options) == 0)
-   {
-      printf("Sikerült a  %s csatolása\n", p[i].file_system);
-   }
-   else
-   {
-      printf("Hiba a fájl csatolása közben: %s\n",p[i].file_system);
-
-      return -1;
-   }
-
-   return 0;
-}
-int printFstab()
-{
-for(int i=0;i<N;i++)
-{
-                             
-printf("\n%d: %s",i, p[i].file_system);
-printf(" %d: %s",i,p[i].mount_point);                         
-printf(" %d: %s",i,p[i].type);
-printf(" %d: %s",i,p[i].options);                               
-printf(" %d: %s",i,p[i].dump);
-printf(" %d: %s",i,p[i].pass);
-
-}
-
-
-}
-
-int decodeFstab()
-{
-
- int i = 0;
- bool commLine=false;;
- char tmp = 0;
- FILE *f;
- 
- if (!(f = fopen("fstab","r"))) {
- fprintf(stderr,"Hiba, a fajl megnyitasanal\n");
- exit(1);
- }
- 
- 
- char *fstab;
- size_t currSize;
- currSize = sizeof(char);
- fstab = (char *)malloc(currSize);
- 
- int k=0;
- 
- char * pch;
- 
- 
-while (!feof(f) ) 
-         {
+        partition_t * current = p;
+        //Fstab megnyitás, másolás
+        if(system("cp /etc/fstab fstab")) printf("Hiba történt az fstab másolása közben");
+        FILE *f;
+        if (!(f = fopen("fstab","r"))) {
+        fprintf(stderr,"Hiba, a fajl megnyitasanal\n");
+        exit(1);
+        }
+        
+        //fstab beolvása, feldolgozása és tárolása
+        char tmp=0;
+        bool commLine=false, moreSpace=false;
+        int i=0;
+        while (!feof(f)){
                 fscanf(f,"%c",&tmp);
-                
-                 if(tmp == '#') commLine=true; 
-                 if(commLine && tmp!='\n') continue;
-                 if(commLine && tmp=='\n') {commLine=false;continue;}
-                 
-            
                
-                 if(tmp == '\n')
-                 {
-                  pch = strtok (fstab," ");
-                    int j=0;
-                   while (pch != NULL)
-                          {
-                               switch (j){
-                                   case 0:
-                                        p[i].file_system=(char *)malloc(strlen(pch));
-                                        
-                                        strcpy(p[i].file_system, strdup(pch));
-                                         printf("\nP: %s,%p\nPCH: %s,%p",p[i].file_system,p[i].file_system,pch,pch);
-                                   break;
-                                   case 1:
-                                    p[i].mount_point=(char *)malloc(strlen(pch));
-                                        strcpy(p[i].mount_point, pch);
-                                   break;
-                                   case 2:
-                                    p[i].type=(char *)malloc(strlen(pch));
-                                        strcpy(p[i].type, pch);
-                                    break;
-                                   case 3:
-                                    p[i].options=(char *)malloc(strlen(pch));
-                                        strcpy(p[i].options, pch);
-                                   break;
-                                   case 4:
-                                    p[i].dump=atoi(pch);
-                                     
-                                   break;
-                                   case 5:
-                                    p[i].pass=atoi(pch);
-                                     
-                                        free(fstab);
-                                        currSize = sizeof(char);
-                                        fstab = (char *)malloc(currSize);
-                                  
-                                        i=0;
-                                      
-                                   break;
-                                  
-                                }
-                               
-                            pch = strtok (NULL, " ");
-                            j++;
-                          }
-                 
-
-                 }
-                 
-                 
-                 fstab[i] = tmp;
-                 currSize += sizeof(char);
-                 fstab = (char *)realloc(fstab,currSize);
-                 
-                 
                 
-                 i++;
-
-         }
-
-return 0;
-
+                //Kommentes sorok átugrása
+                if(tmp == '#') commLine=true; 
+                if(commLine && tmp!='\n') continue;
+                if(commLine && tmp=='\n') {commLine=false;continue;}
+                
+                //Újsor esetén következő listaelemre ugrás.
+                if(tmp=='\n') {
+                current->next=(partition *)malloc(sizeof(partition_t));
+                current = current->next;
+                i=0;
+                }
+                
+                //Többszörös szóköz megszüntetése, Szóköz esetén a következő strukktúra elemre ugrás.
+                if(tmp==' ')  moreSpace=true;
+                if(moreSpace && tmp!=' '){i++, moreSpace=false;}
+                if(moreSpace && tmp==' '){continue;}
+             
+                 switch(i){
+                 case 0:
+                 //Növeli a struktúra méretét eggyel, majd az utolsó helyre \n az utolsó előttíre pedig az aktuális értéket.
+                 if(tmp=='\n') continue;
+                 current->file_system=(char *)realloc(current->file_system,(current->fsS++ * sizeof(char*)));
+                 current->file_system[current->fsS-1]=tmp;
+                 current->file_system[current->fsS]='\0';
+                
+                 break;
+                 case 1:
+                 current->mount_point=(char *)realloc(current->mount_point,(current->mpS++ * sizeof(char*)));
+                 current->mount_point[current->mpS-1]=tmp;
+                 current->mount_point[current->mpS]='\0';
+                 
+                 break;
+                 case 2:
+                 current->type=(char *)realloc(current->type,(current->tS++ * sizeof(char*)));
+                 current->type[current->tS-1]=tmp;
+                 current->type[current->tS]='\0';
+                 
+                 break;
+                 case 3:
+                 current->options=(char *)realloc(current->options,(current->oS++ * sizeof(char*)));
+                 current->options[current->oS-1]=tmp;
+                 current->options[current->oS]='\0';
+                 
+                 break;
+                 case 4:
+                 current->dump=atoi(&tmp);
+                 
+                 break;
+                 case 5:
+                 current->pass=atoi(&tmp);
+                 
+                 break;
+                
+                
+                
+                 }
+        
+        }
+        
 }
-int main(int argc, char *argv[]) {
-
-decodeFstab();
-printFstab();
 
 
+void printFstab(partition_t * head) {
+    partition_t * current = head;
+    int i=0;
+    while (current != NULL) {
+        //printf("%d\n", current->val);
+        printf("\n%d.: 00 %s, 00 %s, 00 %s, 00 %s,00 %d,00 %d",i, current->file_system,current->mount_point,current->type,current->options,current->dump,current->pass);
+
+        current = current->next;
+        i++;
+    }
+}
+
+
+
+int umountFstab(partition_t * head) {
+    partition_t * current = head;
+    int i=0;
+    while (current != NULL) {
+
+   if (umount(current->file_system) == 0)
+   {
+      printf("Sikerült a  %s lecsatolása\n", current->file_system);
+   }
+   else
+   {
+      printf("Hiba a fájl lecsatolása közben: %s\n",current->file_system);
+
+      return -1;
+   }
+
+   return 0;
+}}
+
+int mountFstab(partition_t * head) {
+    partition_t * current = head;
+    int i=0;
+    while (current != NULL) {
+
+   
+   if (mount(current->file_system, current->mount_point, current->type, current->dump, current->options) == 0)
+   {
+      printf("Sikerült a  %s csatolása\n", current->file_system);
+   }
+   else
+   {
+      printf("Hiba a fájl csatolása közben: %s\n",current->file_system);
+
+      //return -1;
+   }
+        current=current->next;
+  
+}
  return 0;}
 
+int main(int argc, char *argv[]) {
+    
+        partition_t *p=(partition_t*)malloc(sizeof(partition));
+        fstabDecodeToList(p);     
+        printFstab(p);
+        mountFstab(p);
+
+ 
+
+
+
+return 0;
+}
