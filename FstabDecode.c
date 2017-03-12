@@ -115,7 +115,7 @@ int fstabDecodeToList(partition_t *p)
 
 }
 
-partition_t file_systemConvert(partition_t *head)
+partition_t file_systemToPath(partition_t *head)
 {
     partition_t * p = head;
     int i=0;
@@ -167,11 +167,11 @@ int umountFstab(partition_t * head) {
     while (current != NULL) {
         if (umount(current->file_system) == 0)
         {
-            printf("Sikerült a  %s lecsatolása\n", current->path);
+            printf("\nSikerült a  %s lecsatolása\n", current->path);
         }
         else
         {
-            printf("Hiba a fájl lecsatolása közben: %s\n",current->path);
+            printf("\nHiba a fájl lecsatolása közben: %s\n",current->path);
 
             return -1;
         }
@@ -188,11 +188,11 @@ int mountFstab(partition_t * head) {
 
         if (mount(current->path, current->mount_point, current->type, current->dump, current->options) == 0)
         {
-            printf("Sikerült a  %s csatolása\n", current->path);
+            printf("\nSikerült a  %s csatolása", current->path);
         }
         else
         {
-            printf("Hiba a fájl csatolása közben: %s\n",current->path);
+            printf("\nHiba a fájl csatolása közben: %s",current->path);
 
             //return -1;
         }
@@ -209,9 +209,9 @@ int main(int argc, char *argv[]) {
 
     partition_t *p=(partition_t*)malloc(sizeof(partition));
     fstabDecodeToList(p);
-    file_systemConvert(p);
+    file_systemToPath(p);
     printFstab(p);
-
+  //  umountFstab(p);
     mountFstab(p);
 
 
