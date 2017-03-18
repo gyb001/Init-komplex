@@ -17,7 +17,9 @@ typedef struct partition
     int dump;
     int pass;
     char *label;
-    struct partition *next;
+    bool needMount=true;
+    struct partition *next=NULL;
+    struct partition *prev=NULL;
 } partition_t;
 
 
@@ -66,10 +68,11 @@ int fstabDecodeToList(partition_t *p)
         //Újsor esetén következő listaelemre ugrás.
         if(tmp=='\n') {
             current->next=(partition *)malloc(sizeof(partition_t));
+             partition_t * tmp = current;
             current = current->next;
+            current->prev=tmp;
             i=0;
         }
-
 
         switch(i) {
         case 0:
@@ -110,9 +113,9 @@ int fstabDecodeToList(partition_t *p)
 
 
         }
-
-    }
-
+        
+     
+}
 }
 
 partition_t file_systemToPath(partition_t *head)
@@ -146,12 +149,28 @@ partition_t file_systemToPath(partition_t *head)
     }
 }
 
-void printFstab(partition_t * head) {
-    partition_t * current = head;
+//A végén beolvas egy null ból álló sort, azt szünteti meg. 
+int fixListEnd(partition_t * head){
+ partition_t * current = head;
     int i=0;
     while (current != NULL) {
-        if(current->file_system==NULL) break;
-        printf("\n%d.:  | %s | %s | %s | %s | %s | %d | %d | ",i,current->path, current->file_system,current->mount_point,current->type,current->options,current->dump,current->pass);
+        if(!current->file_system){
+                 current->prev->next=NULL;
+                  break;
+        }
+         current=current->next;
+    }
+    return 0;
+    }
+
+//A név adja hogy mit csinál
+void printFstab(partition_t * head) {
+    partition_t * current = head;
+    printf("\nAz fstabból beolvasott adatok:");
+    int i=0;
+    while (current != NULL) {
+     
+        printf("\n%d.:  | %s | %s | %s | %s | %s | %d | %d | ",i+1,current->path, current->file_system,current->mount_point,current->type,current->options,current->dump,current->pass);
 
 
         current = current->next;
@@ -160,26 +179,31 @@ void printFstab(partition_t * head) {
 }
 
 
-
+//...
 int umountFstab(partition_t * head) {
     partition_t * current = head;
     int i=0;
     while (current != NULL) {
-        if (umount(current->file_system) == 0)
+
+
+        if (umount(current->path) == 0)
+        
         {
-            printf("\nSikerült a  %s lecsatolása\n", current->path);
+            printf("\nSikerült a  %s lecsatolása", current->path);
         }
         else
         {
-            printf("\nHiba a fájl lecsatolása közben: %s\n",current->path);
+            printf("\nHiba a fájl lecsatolása közben: %s",current->path);
 
-            return -1;
+            //return -1;
         }
+        current=current->next;
 
-        return 0;
     }
+    return 0;
 }
 
+//...
 int mountFstab(partition_t * head) {
     partition_t * current = head;
     int i=0;
@@ -205,15 +229,41 @@ int mountFstab(partition_t * head) {
 
 
 
+int  freeListElement(partition_t * current) {   
+     free(current->file_system);
+     free(current->path);
+     free(current->mount_point);
+     free(current->type);
+     free(current->options);
+     free(current->label);
+     free(current->next);
+     free(current->prev);
+}
+
+int freeList(partition_t * head) {   
+  partition_t * current = head;
+    int i=0;
+    while (current != NULL) {
+        freeListElement(current);
+        current=current->next;
+
+    }
+    return 0;
+}
+
+
+
+    
 int main(int argc, char *argv[]) {
 
     partition_t *p=(partition_t*)malloc(sizeof(partition));
     fstabDecodeToList(p);
+    fixListEnd(p);
     file_systemToPath(p);
     printFstab(p);
-  //  umountFstab(p);
+    umountFstab(p);
     mountFstab(p);
-
+    freeList(p);o
 
 
 
